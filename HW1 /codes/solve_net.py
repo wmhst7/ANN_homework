@@ -40,9 +40,10 @@ def train_net(model, loss, config, inputs, labels, batch_size, disp_freq):
 
         if iter_counter % disp_freq == 0:
             msg = '  Training iter %d, batch loss %.4f, batch acc %.4f' % (iter_counter, np.mean(loss_list), np.mean(acc_list))
-            loss_list = []
-            acc_list = []
+            # loss_list = []
+            # acc_list = []
             LOG_INFO(msg)
+    return np.ravel(loss_list), np.ravel(acc_list)
 
 
 def test_net(model, loss, inputs, labels, batch_size):
@@ -59,3 +60,4 @@ def test_net(model, loss, inputs, labels, batch_size):
 
     msg = '    Testing, total mean loss %.5f, total acc %.5f' % (np.mean(loss_list), np.mean(acc_list))
     LOG_INFO(msg)
+    return np.ravel(np.mean(loss_list)), np.ravel(np.mean(acc_list))

@@ -22,21 +22,23 @@ class Layer(object):
 
         self._saved_tensor = tensor
 
+
 class Relu(Layer):
     def __init__(self, name):
         super(Relu, self).__init__(name)
 
     def forward(self, input):
         # TODO START
-        '''Your codes here'''
-        pass
+        self._saved_for_backward(input)
+        return np.maximum(input, 0)
         # TODO END
 
     def backward(self, grad_output):
         # TODO START
-        '''Your codes here'''
-        pass
+        grad_output[self._saved_tensor <= 0] = 0
+        return grad_output
         # TODO END
+
 
 class Sigmoid(Layer):
     def __init__(self, name):
@@ -44,31 +46,44 @@ class Sigmoid(Layer):
 
     def forward(self, input):
         # TODO START
-        '''Your codes here'''
-        pass
+        res = 1.0 / (1.0 + np.exp(-input))
+        self._saved_for_backward(res)
+        return res
         # TODO END
 
     def backward(self, grad_output):
         # TODO START
-        '''Your codes here'''
-        pass
+        res = grad_output * self._saved_tensor * (1.0 - self._saved_tensor)
+        return res
         # TODO END
+
 
 class Gelu(Layer):
-	def __init__(self, name):
-		super(Gelu, self).__init__(name)
+    def __init__(self, name):
+        super(Gelu, self).__init__(name)
 
-	def forward(self, input):
+    def f(self, x):
+        tanh = np.tanh(np.sqrt(2 / np.pi) * (x + 0.44715 * np.power(x, 3)))
+        res = 0.5 * (1.0 + tanh) * x
+        return res
+
+    def forward(self, input):
         # TODO START
-        '''Your codes here'''
-        pass
+        res = self.f(input)
+        self._saved_for_backward(input)
+        self.fx = res
+        return res
         # TODO END
 
-	def backward(self, grad_output):
+    def backward(self, grad_output):
         # TODO START
-        '''Your codes here'''
-        pass
+        delta = 1e-5
+        x = self._saved_tensor
+        xx = x + delta
+        res = grad_output * (self.f(xx) - self.fx) / delta
+        return res
         # TODO END
+
 
 class Linear(Layer):
     def __init__(self, name, in_num, out_num, init_std):
@@ -86,14 +101,17 @@ class Linear(Layer):
 
     def forward(self, input):
         # TODO START
-        '''Your codes here'''
-        pass
+        # print("Linear Forward: Shape of input: ", input.shape)
+        self._saved_for_backward(input)
+        self._saved_tensor = input
+        return input.dot(self.W) + self.b  # Wx + b
         # TODO END
 
     def backward(self, grad_output):
         # TODO START
-        '''Your codes here'''
-        pass
+        self.grad_W = self._saved_tensor.T.dot(grad_output)  # W
+        self.grad_b = grad_output.sum(axis=0)  # b
+        return grad_output.dot(self.W.T)  # W^T * grad_output
         # TODO END
 
     def update(self, config):
