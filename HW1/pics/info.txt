@@ -1,0 +1,107 @@
+# MLP-1
+
+# model = Network()
+# model.add(Linear('fc1', 784, 256, 0.01))
+# model.add(Gelu('relu1'))
+# model.add(Linear('fc2', 256, 10, 0.01))
+
+# Relu
+{'learning_rate': 0.1, 'weight_decay': 0.0, 'momentum': 0.0, 'batch_size': 100, 'max_epoch': 60, 'disp_freq': 50, 'test_epoch': 1, 'plot_average_n': 100}
+Final Train loss: 0.0074171492219043175 , Train acc: 0.9991
+Final Test loss: 0.06588888924469462 , Test acc: 0.9812000000000001
+Total Time Used: 0:01:47.212265
+
+# Sigmoid
+INFO
+ {'learning_rate': 0.1, 'weight_decay': 0.0, 'momentum': 0.0, 'batch_size': 100, 'max_epoch': 60, 'disp_freq': 500, 'test_epoch': 1, 'plot_average_n': 100}
+Final Train loss: 0.08516752683253434 , Train acc: 0.9757000000000001
+Final Test loss: 0.09481818591843327 , Test acc: 0.9724
+Total Time Used: 0:01:32.731701
+
+# Gelu
+INFO
+ {'learning_rate': 0.1, 'weight_decay': 0.0, 'momentum': 0.0, 'batch_size': 100, 'max_epoch': 60, 'disp_freq': 500, 'test_epoch': 1, 'plot_average_n': 100}
+Final Train loss: 0.009415039315333789 , Train acc: 0.9986
+Final Test loss: 0.06628006729653096 , Test acc: 0.9814000000000002
+Total Time Used: 0:02:39.066461
+
+# MLP-2
+
+model = Network()
+model.add(Linear('fc1', 784, 500, 0.01))
+model.add(Sigmoid('relu1'))
+model.add(Linear('fc2', 500, 100, 0.01))
+model.add(Sigmoid('relu1'))
+model.add(Linear('fc2', 100, 10, 0.01))
+
+# Relu
+INFO
+ {'learning_rate': 0.1, 'weight_decay': 0.0, 'momentum': 0.0, 'batch_size': 100, 'max_epoch': 60, 'disp_freq': 500, 'test_epoch': 1, 'plot_average_n': 100}
+Final Train loss: 0.0007082558404018134 , Train acc: 1.0
+Final Test loss: 0.07492884655536544 , Test acc: 0.9831
+Total Time Used: 0:03:09.178077
+
+# Sigmoid
+INFO
+ {'learning_rate': 0.1, 'weight_decay': 0.0, 'momentum': 0.0, 'batch_size': 100, 'max_epoch': 60, 'disp_freq': 500, 'test_epoch': 1, 'plot_average_n': 100}
+Final Train loss: 0.08469544974570614 , Train acc: 0.9758
+Final Test loss: 0.10822891796453453 , Test acc: 0.9679999999999999
+Total Time Used: 0:02:54.349232
+
+# Gelu
+INFO
+ {'learning_rate': 0.1, 'weight_decay': 0.0, 'momentum': 0.0, 'batch_size': 100, 'max_epoch': 60, 'disp_freq': 500, 'test_epoch': 1, 'plot_average_n': 100}
+Final Train loss: 0.0010124730524222513 , Train acc: 1.0
+Final Test loss: 0.08709878893295857 , Test acc: 0.9808000000000001
+Total Time Used: 0:05:55.956318
+
+
+# MLP-1
+
+# softmax
+INFO
+ {'learning_rate': 0.1, 'weight_decay': 0.0, 'momentum': 0.0, 'batch_size': 100, 'max_epoch': 60, 'disp_freq': 500, 'test_epoch': 1, 'plot_average_n': 100}
+Final Train loss: 0.0075398449637704805 , Train acc: 0.9994
+Final Test loss: 0.061909865917373956 , Test acc: 0.981
+Total Time Used: 0:01:47.906343
+
+# euclidean
+INFO
+ {'learning_rate': 0.1, 'weight_decay': 0.0, 'momentum': 0.0, 'batch_size': 100, 'max_epoch': 60, 'disp_freq': 500, 'test_epoch': 1, 'plot_average_n': 100}
+Final Train loss: 0.027087206465752335 , Train acc: 0.9902
+Final Test loss: 0.036514256522156806 , Test acc: 0.9784999999999999
+Total Time Used: 0:01:37.624254
+
+# hingeloss
+
+INFO
+ {'learning_rate': 0.1, 'weight_decay': 0.0, 'momentum': 0.0, 'batch_size': 100, 'max_epoch': 60, 'disp_freq': 500, 'test_epoch': 1, 'plot_average_n': 100}
+Final Train loss: 0.3709566981019595 , Train acc: 0.9766000000000001
+Final Test loss: 0.8730399872389368 , Test acc: 0.9617
+Total Time Used: 0:01:34.568526
+
+# MLP-2
+
+# Euc
+INFO
+ {'learning_rate': 0.1, 'weight_decay': 0.0, 'momentum': 0.0, 'batch_size': 100, 'max_epoch': 60, 'disp_freq': 500, 'test_epoch': 1, 'plot_average_n': 100}
+Final Train loss: 0.005625363527737253 , Train acc: 0.9983
+Final Test loss: 0.01687305105028655 , Test acc: 0.9858000000000001
+Total Time Used: 0:03:11.525285
+
+# Softmax
+INFO
+ {'learning_rate': 0.1, 'weight_decay': 0.0, 'momentum': 0.0, 'batch_size': 100, 'max_epoch': 60, 'disp_freq': 500, 'test_epoch': 1, 'plot_average_n': 100}
+Final Train loss: 0.0007299008186192325 , Train acc: 1.0
+Final Test loss: 0.07614059357857628 , Test acc: 0.9822
+Total Time Used: 0:02:55.971683
+
+# HingeLoss
+INFO
+ {'learning_rate': 0.1, 'weight_decay': 0.0, 'momentum': 0.0, 'batch_size': 100, 'max_epoch': 60, 'disp_freq': 500, 'test_epoch': 1, 'plot_average_n': 100}
+Final Train loss: 0.44920937438262376 , Train acc: 0.9741
+Final Test loss: 1.0128908935236947 , Test acc: 0.9600000000000002
+Total Time Used: 0:02:42.280009
+
+
+

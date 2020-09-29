@@ -26,7 +26,7 @@ model.add(Linear('fc2', 500, 100, 0.01))
 model.add(Relu('relu2'))
 model.add(Linear('fc3', 100, 10, 0.01))
 
-loss = EuclideanLoss(name='loss')
+loss = SoftmaxCrossEntropyLoss(name='loss')
 
 # Training configuration
 # You should adjust these hyperparameters
@@ -72,10 +72,10 @@ print('Final Train loss:', loss_list_train[-1], ", Train acc:", acc_list_train[-
 print('Final Test loss:', loss_list_test[-1], ", Test acc:", acc_list_test[-1])
 print('Total Time Used:', (endtime - starttime))
 
-np.save('res/loss_list_train_2_euc.npy', loss_list_train)
-np.save('res/acc_list_train_2_euc.npy', acc_list_train)
-np.save('res/loss_list_test_2_euc.npy', loss_list_test)
-np.save('res/acc_list_test_2_euc.npy', acc_list_test)
+np.save('res/loss_list_train_2_hinge.npy', loss_list_train)
+np.save('res/acc_list_train_2_hinge.npy', acc_list_train)
+np.save('res/loss_list_test_2_hinge.npy', loss_list_test)
+np.save('res/acc_list_test_2_hinge.npy', acc_list_test)
 
 plot_acc_loss(loss_list_train, acc_list_train, loss_list_test, acc_list_test)
 
