@@ -1,0 +1,211 @@
+########################
+# Additional Files
+########################
+# .DS_Store
+# data
+# wordvec
+
+########################
+# Filled Code
+########################
+# ../codes/rnn_cell.py:1
+        self.linear_Wz = nn.Linear(input_size, hidden_size, bias=False)
+        self.linear_Uz = nn.Linear(hidden_size, hidden_size, bias=False)
+        self.linear_Wr = nn.Linear(input_size, hidden_size, bias=False)
+        self.linear_Ur = nn.Linear(hidden_size, hidden_size, bias=False)
+        self.linear_Wc = nn.Linear(input_size, hidden_size, bias=False)
+        self.linear_Uc = nn.Linear(hidden_size, hidden_size, bias=False)
+
+# ../codes/rnn_cell.py:2
+        h = torch.zeros(size=(batch_size, self.hidden_size), device=device, dtype=torch.float)
+        return h
+
+# ../codes/rnn_cell.py:3
+        prev_h = state
+        z = torch.sigmoid(self.linear_Wz(incoming) + self.linear_Uz(prev_h))
+        r = torch.sigmoid(self.linear_Wr(incoming) + self.linear_Ur(prev_h))
+        h_ = torch.tanh(self.linear_Wc(incoming) + self.linear_Uz(r * prev_h))
+        h = (1. - z) * prev_h + z * h_
+        output = h
+        new_state = h
+
+# ../codes/rnn_cell.py:4
+        self.linear_Wi = nn.Linear(input_size, hidden_size)
+        self.linear_Ui = nn.Linear(hidden_size, hidden_size, bias=False)
+        self.linear_Wo = nn.Linear(input_size, hidden_size)
+        self.linear_Uo = nn.Linear(hidden_size, hidden_size, bias=False)
+        self.linear_Wf = nn.Linear(input_size, hidden_size)
+        self.linear_Uf = nn.Linear(hidden_size, hidden_size, bias=False)
+        self.linear_Wc = nn.Linear(input_size, hidden_size)
+        self.linear_Uc = nn.Linear(hidden_size, hidden_size, bias=False)
+
+# ../codes/rnn_cell.py:5
+        h = torch.zeros(size=(batch_size, self.hidden_size), device=device, dtype=torch.float)
+        c = torch.zeros(size=(batch_size, self.hidden_size), device=device, dtype=torch.float)
+        return h, c
+
+# ../codes/rnn_cell.py:6
+        prev_h, prev_c = state
+        i = torch.sigmoid(self.linear_Wi(incoming) + self.linear_Ui(prev_h))
+        f = torch.sigmoid(self.linear_Wf(incoming) + self.linear_Uf(prev_h))
+        o = torch.sigmoid(self.linear_Wo(incoming) + self.linear_Uo(prev_h))
+        c_ = torch.tanh(self.linear_Wc(incoming) + self.linear_Uc(prev_h))
+        new_c = f * prev_c + i * c_
+        new_h = o * torch.tanh(new_c)
+        output = new_h
+
+# ../codes/model.py:1
+        self.num_vocabs = num_vocabs
+        self.cross_entropy = nn.CrossEntropyLoss()
+        self.cell_kind = cell_kind
+        if self.cell_kind == "RNN":
+            self.cells = nn.Sequential(
+                RNNCell(num_embed_units, num_units),
+                *[RNNCell(num_units, num_units) for _ in range(num_layers - 1)]
+            )
+        elif self.cell_kind == "GRU":
+            self.cells = nn.Sequential(
+                GRUCell(num_embed_units, num_units),
+                *[GRUCell(num_units, num_units) for _ in range(num_layers - 1)]
+            )
+        elif self.cell_kind == "LSTM":
+            self.cells = nn.Sequential(
+                LSTMCell(num_embed_units, num_units),
+                *[LSTMCell(num_units, num_units) for _ in range(num_layers - 1)]
+            )
+
+# ../codes/model.py:2
+        # print(sent.shape)
+        embedding = self.wordvec[sent]
+        # print(embedding.shape)
+        # shape: (batch_size, length, num_embed_units)
+        # one hot
+        # x = []
+        # for i in range(batch_size):
+        #     x.append(torch.zeros((seqlen, self.num_vocabs), device=device).scatter_(1, sent[i].reshape((seqlen, 1)), 1))
+        # embedding = torch.stack(x, dim=0)
+        # print(embedding.shape)
+
+# ../codes/model.py:3
+        logits_per_step = torch.stack(logits_per_step, dim=1)
+        # print(logits_per_step.shape, logits_per_step[0,:,:2])
+        # print(length.shape, length[0])
+        # print(sent.shape, sent[0,:])
+        for i, len in enumerate(length): # i->batch_size, len->sentence_length
+            if len > 1:
+                # cross_entropy((token_len, num_vocabs), (token_len))
+                # token_len is used as batch_size in cross entropy
+                loss.append(self.cross_entropy(logits_per_step[i, :len-1, :], sent[i, 1:len]))
+
+        # print(loss)
+        loss = torch.mean(torch.stack(loss, dim=0))
+
+# ../codes/model.py:4
+            embedding = self.wordvec[now_token]
+            # embedding = torch.zeros((now_token.shape[0], 3689), device=device).scatter_(1, now_token.reshape((now_token.shape[0], 1)), 1)
+            # shape: (batch_size, num_embed_units)
+
+# ../codes/model.py:5
+                # Reference: https://gist.github.com/thomwolf/1a5a29f6962089e871b94cbd09daf317
+                # 参考了top-p的写法
+                logits_new = []
+                for one_logits in logits:
+                    # print("logits", one_logits)
+                    # implement top-p samplings
+                    sorted_logits, sorted_indices = torch.sort(one_logits, descending=True)
+                    # print(sorted_logits, sorted_indices)
+                    cumulative_prob = torch.cumsum(F.softmax(sorted_logits, dim=-1), dim=-1)
+                    # print("cumulative_prob", cumulative_prob)
+                    sorted_indices_to_remove = cumulative_prob > max_probability
+                    # print(sorted_indices_to_remove)
+                    # to avoid no token left
+                    sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone()
+                    sorted_indices_to_remove[..., 0] = 0
+                    # print("sorted_indices_to_remove", sorted_indices_to_remove)
+                    indices_to_remove = sorted_indices[sorted_indices_to_remove]
+                    # print(indices_to_remove)
+                    one_logits[indices_to_remove] = -float('Inf')
+                    logits_new.append(one_logits)
+
+                logits_new = torch.stack(logits_new, dim=0)
+                prob = (logits_new / temperature).softmax(dim=-1)  # shape: (batch_size, num_vocabs)
+                now_token = torch.multinomial(prob, 1)[:, 0] # shape: (batch_size)
+
+
+########################
+# References
+########################
+# https://gist.github.com/thomwolf/1a5a29f6962089e871b94cbd09daf317
+
+########################
+# Other Modifications
+########################
+# _codes/rnn_cell.py -> ../codes/rnn_cell.py
+# 4 + from torch.nn.parameter import Parameter
+# 5 +
+# 18 -     def forward(self, incoming, state):
+# 20 +     def forward(self, incoming, state): # state->h_t-1, incoming->X_t
+# 25 +
+# 64 +
+# _codes/main.py -> ../codes/main.py
+# 11 +
+# 12 + from tensorboardX import SummaryWriter
+# 48 + parser.add_argument('--cell', type=str, default="GRU",
+# 49 +     help='The kind of rnn cells')
+# 51 +
+# 52 + writer = SummaryWriter('./workspace/log')
+# 116 +     print(device)
+# 114 -
+# 121 +     # model name
+# 122 +     mdname = args.cell + "layer_" + str(args.layers) + args.decode_strategy + "temp_" + str(args.temperature) + "prob_" \
+# 123 +              + str(args.max_probability) + "hidden_" + str(args.units)
+# 123 -             dataloader)
+# 123 ?                       ^
+# 132 +             dataloader,
+# 132 ?                       ^
+# 133 +             args.cell
+# 134 +         )
+# 163 -
+# 174 +             print("*******************************************************")
+# 177 +             print("*******************************************************")
+# 178 +             # Plot
+# 179 +             writer.add_scalar(mdname+'/TrainLoss', train_loss, epoch)
+# 180 +             writer.add_scalar(mdname+'/ValidationLoss', val_loss, epoch)
+# 181 +             writer.add_scalar(mdname+'/ValidationPerplexity', val_ppl, epoch)
+# 182 +
+# 183 +         # Test Model
+# 184 +         model_path = os.path.join(args.train_dir, 'checkpoint_%s.pth.tar' % args.name)
+# 185 +         print("Loading model from %s" % model_path)
+# 186 +         model = torch.load(model_path)
+# 187 +         _, ppl = fast_evaluate(model, dataloader, "test", device)
+# 188 +         result = evaluate(model, dataloader, "test", device)
+# 189 +         with open('./workspace/'+mdname+'output.txt', 'w') as fout:
+# 190 +             for sent in result["gen"]:
+# 191 +                 fout.write(" ".join(sent) + "\n")
+# 192 +
+# 193 +         print(mdname + "        test_set, perplexity %.2f, forward BLEU %.3f, backward BLEU %.3f, harmonic BLEU %.3f" % (
+# 194 +         ppl, result["fw-bleu"], result["bw-bleu"], result["fw-bw-bleu"]))
+# 195 +         print("Test result: " + mdname + "    %.2f,  %.3f,  %.3f,  %.3f" % (
+# 196 +             ppl, result["fw-bleu"], result["bw-bleu"], result["fw-bw-bleu"]))
+# 197 +         print("        test_set, write inference results to output.txt")
+# 215 +
+# _codes/model.py -> ../codes/model.py
+# 14 -             wordvec,            # pretrained wordvec matrix
+# 14 +             wordvec,            # pretrained wordvec matrix [len(vocab_list), n_dims]
+# 14 ?                                                            ++++++++++++++++++++++++++
+# 15 -             dataloader):      # dataloader
+# 15 ?                       ^^
+# 15 +             dataloader,      # dataloader
+# 15 ?                       ^
+# 16 +             cell_kind
+# 17 +             ):
+# 62 -         loss = 0
+# 62 ?                ^
+# 87 +         loss = []
+# 87 ?                ^^
+# 69 -             logits_per_step.append(logits)
+# 94 +             logits_per_step.append(logits) # shape: [sentence_length-1, tensor:(batch_size, num_vocabs)]
+# 76 -         return loss, torch.stack(logits_per_step, dim=1)
+# 76 ?                      ------------               --------
+# 112 +         return loss, logits_per_step
+

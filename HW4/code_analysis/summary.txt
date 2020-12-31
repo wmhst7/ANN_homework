@@ -1,0 +1,238 @@
+########################
+# Additional Files
+########################
+# inception
+# .DS_Store
+# results 下午2.41.39
+# results
+# runs
+# data
+# __pycache__
+
+########################
+# Filled Code
+########################
+# ../codes/VAE/VAE.py:1
+        self.enc1 = nn.Sequential(
+            nn.Conv2d(in_channels=1, out_channels=16, kernel_size=3, stride=1, padding=1), nn.ReLU())
+        self.enc2 = nn.Sequential(
+            nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=2, padding=1), nn.ReLU())
+        self.enc3 = nn.Sequential(
+            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, stride=1, padding=1), nn.ReLU())
+        self.enc4 = nn.Sequential(
+            nn.Conv2d(in_channels=32, out_channels=16, kernel_size=3, stride=2, padding=1), nn.ReLU())
+        self.enc5 = nn.Sequential(
+            nn.Linear(in_features=16 * 8 * 8, out_features=2 * latent_dim), nn.ReLU())
+        self.enc6 = nn.Sequential(
+            nn.Linear(in_features=2 * latent_dim, out_features=2 * latent_dim))
+
+        self.enc_conv = nn.Sequential(
+            self.enc1, self.enc2, self.enc3, self.enc4
+        )
+
+        self.enc_lin = nn.Sequential(
+            self.enc5, self.enc6
+        )
+
+        self.dec_lin = nn.Sequential(
+            nn.Linear(in_features=latent_dim, out_features=latent_dim), nn.ReLU(),
+            nn.Linear(in_features=latent_dim, out_features=16 * 8 * 8),
+        )
+
+        self.dec_conv = nn.Sequential(
+            nn.ConvTranspose2d(in_channels=16, out_channels=32, kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.ReLU(),
+            nn.ConvTranspose2d(in_channels=32, out_channels=32, kernel_size=3, stride=1, padding=1, output_padding=0),
+            nn.ReLU(),
+            nn.ConvTranspose2d(in_channels=32, out_channels=16, kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.ReLU(),
+            nn.ConvTranspose2d(in_channels=16, out_channels=1, kernel_size=3, stride=1, padding=1, output_padding=0),
+            nn.Sigmoid()
+        )
+
+        # All MLP
+        # self.enc = nn.Sequential(
+        #     nn.Linear(in_features=16 * 8 * 8, out_features=400), nn.ReLU(),
+        #     nn.Linear(in_features=400, out_features=latent_dim * 2), nn.ReLU()
+        # )
+        #
+        # self.dec = nn.Sequential(
+        #     nn.Linear(in_features=latent_dim, out_features=400), nn.ReLU(),
+        #     nn.Linear(in_features=400, out_features=32 * 32), nn.Sigmoid()
+        # )
+
+# ../codes/VAE/VAE.py:2
+        std = torch.exp(0.5 * log_var)
+        sampled_z = torch.randn_like(std) * std + mu
+
+# ../codes/VAE/VAE.py:3
+            # print(x.size())
+            x = self.enc_conv(x)
+            # print(x.size())
+            x = x.reshape((-1, 16 * 8 * 8))
+            # print(x.size())
+            x = self.enc_lin(x)
+            # print(x.size())
+            mu = x[:, :self.latent_dim]
+            log_var = x[:, self.latent_dim: self.latent_dim * 2]
+            x_repara = self.reparameterize(mu, log_var)
+
+            recon_x = self.dec_lin(x_repara).reshape((-1, 16, 8, 8))
+            recon_x = self.dec_conv(recon_x)
+
+            # All MLP
+            # x = self.enc(x.reshape((x.size()[0], -1)))
+            # mu = x[:, :self.latent_dim]
+            # log_var = x[:, self.latent_dim: self.latent_dim * 2]
+            # x_repara = self.reparameterize(mu, log_var)
+            # recon_x = self.dec(x_repara).reshape((-1, 1, 32, 32))
+
+
+# ../codes/VAE/VAE.py:4
+            gen_x = self.dec_lin(z).reshape((-1, 16, 8, 8))
+            gen_x = self.dec_conv(gen_x)
+
+            # All MLP
+            # gen_x = self.dec(z).reshape((-1, 1, 32, 32))
+
+# ../codes/VAE/trainer.py:1
+        recon_loss = F.binary_cross_entropy(recon, target, size_average=False)
+        kl_loss = 0.5 * torch.sum(torch.exp(log_var) + torch.pow(mu, 2) - log_var - 1)
+
+# ../codes/GAN/GAN.py:1
+            nn.ConvTranspose2d(in_channels=latent_dim, out_channels=4*hidden_dim, kernel_size=4, stride=1, padding=0, bias=False),
+            nn.BatchNorm2d(num_features=4*hidden_dim),
+            nn.ReLU(),
+            nn.ConvTranspose2d(in_channels=4*hidden_dim, out_channels=2 * hidden_dim, kernel_size=4, stride=2, padding=1,bias=False),
+            nn.BatchNorm2d(num_features=2 * hidden_dim),
+            nn.ReLU(),
+            nn.ConvTranspose2d(in_channels=2 * hidden_dim, out_channels=hidden_dim, kernel_size=4, stride=2, padding=1,bias=False),
+            nn.BatchNorm2d(num_features=hidden_dim),
+            nn.ReLU(),
+            nn.ConvTranspose2d(in_channels=hidden_dim, out_channels=1, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.Tanh()
+
+# ../codes/GAN/trainer.py:1
+        output = self._netD(real_imgs)
+        one_ = torch.ones_like(output, device=self._device, dtype=torch.float)
+        loss_D_real = BCE_criterion(output, one_)
+        D_x = output.mean().item()
+        loss_D_real.backward(retain_graph=True)
+
+# ../codes/GAN/trainer.py:2
+        output_f = self._netD(fake_imgs)
+        zero_ = torch.zeros_like(output_f, device=self._device, dtype=torch.float)
+        loss_D_fake = BCE_criterion(output_f, zero_)
+        D_G_z1 = output_f.mean().item()
+        loss_D_fake.backward(retain_graph=True)
+
+# ../codes/GAN/trainer.py:3
+        output_fake = self._netD(fake_imgs)
+        one_ = torch.ones_like(output_fake, device=self._device, dtype=torch.float)
+        loss_G = BCE_criterion(output_fake, one_)
+        D_G_z2 = output_fake.mean().item()
+        loss_G.backward(retain_graph=True)
+
+
+########################
+# References
+########################
+
+########################
+# Other Modifications
+########################
+# _codes/VAE/dataset.py -> ../codes/VAE/dataset.py
+# 21 -                 # transforms.Normalize((0.5,), (0.5,))
+# 32 -                 # transforms.Normalize((0.5,), (0.5,))
+# 49 -             pin_memory=True
+# 49 ?                        ^^^
+# 47 +             pin_memory=False
+# 47 ?                        ^^^^
+# _codes/VAE/VAE.py -> ../codes/VAE/VAE.py
+# 4 +
+# _codes/VAE/trainer.py -> ../codes/VAE/trainer.py
+# 18 -     def __init__(self, device, model, optimizer, dataset, ckpt_dir, tb_writer):
+# 18 +     def __init__(self, device, model, optimizer, dataset, ckpt_dir, tb_writer, modelname):
+# 18 ?                                                                              +++++++++++
+# 27 +         self.mdname = modelname
+# 59 -                 self._tb_writer.add_scalar("reconstruction_loss", recon_loss, global_step=i)
+# 61 +                 self._tb_writer.add_scalar(self.mdname + "/reconstruction_loss", recon_loss, global_step=i)
+# 61 ?                                            ++++++++++++++ +
+# 60 -                 self._tb_writer.add_scalar("KL_divergence", kl_div, global_step=i)
+# 62 +                 self._tb_writer.add_scalar(self.mdname + "/KL_divergence", kl_div, global_step=i)
+# 62 ?                                            ++++++++++++++ +
+# 61 -                 self._tb_writer.add_scalar("loss", loss, global_step=i)
+# 63 +                 self._tb_writer.add_scalar(self.mdname + "/loss", loss, global_step=i)
+# 63 ?                                            ++++++++++++++ +
+# 65 -                 self._tb_writer.add_scalar('dev/reconstruction_loss', eval_recon_loss, global_step=i)
+# 67 +                 self._tb_writer.add_scalar(self.mdname + '/dev/reconstruction_loss', eval_recon_loss, global_step=i)
+# 67 ?                                            ++++++++++++++ +
+# 66 -                 self._tb_writer.add_scalar('dev/KL_divergence', eval_kl_div, global_step=i)
+# 68 +                 self._tb_writer.add_scalar(self.mdname + '/dev/KL_divergence', eval_kl_div, global_step=i)
+# 68 ?                                            ++++++++++++++ +
+# 67 -                 self._tb_writer.add_scalar('dev/loss', eval_recon_loss + eval_kl_div, global_step=i)
+# 69 +                 self._tb_writer.add_scalar(self.mdname + '/dev/loss', eval_recon_loss + eval_kl_div, global_step=i)
+# 69 ?                                            ++++++++++++++ +
+# 69 -                     self._tb_writer.add_image(name, imgs, global_step=i)
+# 71 +                     self._tb_writer.add_image(self.mdname + "/" + name, imgs, global_step=i)
+# 71 ?                                               ++++++++++++++++++++
+# 73 +         # Interpolation
+# 74 +         N = 10
+# 75 +         self._model.eval()
+# 76 +         noise1 = torch.randn(32, self._model.latent_dim)
+# 77 +         noise2 = torch.randn(32, self._model.latent_dim)
+# 78 +         for k in range(0, N):
+# 79 +             noise = noise1 + k * 1.0 / N * (noise2 - noise1)
+# 80 +             dev_imgs, recons, samples, eval_recon_loss, eval_kl_div = self.evaluate(noise)
+# 81 +             for imgs, name in zip([dev_imgs, recons, samples], ['dev_imgs', 'reconstructions', 'samples']):
+# 82 +                 self._tb_writer.add_image(self.mdname + "/Interpolation" + name, imgs, global_step=k)
+# _codes/VAE/main.py -> ../codes/VAE/main.py
+# 24 -     parser.add_argument('--data_dir', default='data', type=str, help='The path of the data directory')
+# 24 +     parser.add_argument('--data_dir', default='../data', type=str, help='The path of the data directory')
+# 24 ?                                                +++
+# 25 -     parser.add_argument('--ckpt_dir', default='results', type=str, help='The path of the checkpoint directory')
+# 25 +     parser.add_argument('--ckpt_dir', default='./results', type=str, help='The path of the checkpoint directory')
+# 25 ?                                                ++
+# 27 +
+# 28 +     modelname = "VAE_latent_" + str(args.latent_dim) + "_batch_"+str(args.batch_size)+ "_numtrain_"+str(args.num_training_steps)
+# 35 +     print(device)
+# 40 -         trainer = Trainer(device, model, optimizer, dataset, args.ckpt_dir, tb_writer)
+# 43 +         trainer = Trainer(device, model, optimizer, dataset, args.ckpt_dir, tb_writer, modelname)
+# 43 ?                                                                                      +++++++++++
+# 69 -     tb_writer.add_scalar('fid', fid)
+# 72 +     tb_writer.add_scalar(modelname+'/fid', fid)
+# 72 ?                          ++++++++++ +
+# _codes/GAN/trainer.py -> ../codes/GAN/trainer.py
+# 12 +
+# 17 +
+# 61 -
+# 67 +
+# 68 -         # clear gradients
+# 74 +         # cl3ear gradients
+# 74 ?             +
+# 70 -
+# 76 +
+# 78 -
+# 86 +
+# 83 -         return loss_D_real + loss_D_fake, loss_G, D_x, D_G_z1, D_G_z2
+# 83 ?                           ^^
+# 91 +         return loss_D_real, loss_D_fake, loss_G, D_x, D_G_z1, D_G_z2
+# 91 ?                           ^
+# 92 +
+# 95 -             errD, errG, D_x, D_G_z1, D_G_z2 = self.train_step(real_imgs, fake_imgs, criterion)
+# 104 +             errDr, errDf, errG, D_x, D_G_z1, D_G_z2 = self.train_step(real_imgs, fake_imgs, criterion)
+# 104 ?                 ++++++++
+# 96 -
+# 105 +             errD = errDf + errDr
+# 112 +                 self._tb_writer.add_scalar("discriminator_loss_real", errDr, global_step=i)
+# 113 +                 self._tb_writer.add_scalar("discriminator_loss_fake", errDf, global_step=i)
+# 121 +         # Interpolation
+# 122 +         N = 10
+# 123 +         self._netG.eval()
+# 124 +         noise1 = torch.randn(32, self._netG.latent_dim, 1, 1, device=self._device)
+# 125 +         noise2 = torch.randn(32, self._netG.latent_dim, 1, 1, device=self._device)
+# 126 +         for k in range(0, N):
+# 127 +             noise = noise1 + k * 1.0 / N * (noise2 - noise1)
+# 128 +             imgs = make_grid(self._netG(noise)) * 0.5 + 0.5
+# 129 +             self._tb_writer.add_image('interpolation', imgs, global_step=k)
+

@@ -1,0 +1,212 @@
+########################
+# Missing Files
+########################
+# .DS_Store
+
+########################
+# Additional Files
+########################
+# .DS_Store
+# cifar-10_data
+
+########################
+# Filled Code
+########################
+# ../codes/mlp/model.py:1
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.eps = 1e-5
+        self.momentum = 0.1
+        self.weight = Parameter(torch.ones((num_features,), dtype=torch.float), requires_grad=True)
+        self.bias = Parameter(torch.zeros((num_features,), dtype=torch.float), requires_grad=True)
+
+        self.register_buffer('running_mean', torch.zeros(size=(num_features,), dtype=torch.float).to(self.device))
+        self.register_buffer('running_var', torch.ones(size=(num_features,), dtype=torch.float).to(self.device))
+
+
+        if self.training:
+            input_mean = input.mean(axis=0)
+            input_var = input.var(axis=0)
+            input_norm = (input - input_mean) / torch.sqrt(input_var + self.eps)
+            output = self.weight * input_norm + self.bias
+
+            self.running_mean = (1-self.momentum) * self.running_mean + self.momentum * input_mean
+            self.running_var = (1-self.momentum) * self.running_var + self.momentum * input_var
+        else:
+            output = self.weight * (input - self.running_mean) / torch.sqrt(self.running_var + self.eps) + self.bias
+        return output
+
+# ../codes/mlp/model.py:2
+        if self.training:
+            mask = torch.rand(input.size(), device=input.device) > self.p
+            input = (input * mask) / (1 - self.p)
+
+# ../codes/mlp/model.py:3
+        self.linear = nn.Sequential(nn.Linear(3 * 32 * 32, 512),
+                                    BatchNorm1d(512),
+                                    nn.ReLU(),
+                                    Dropout(drop_rate),
+                                    nn.Linear(512, 10))
+
+
+# ../codes/mlp/model.py:4
+        logits = self.linear(x)
+
+# ../codes/cnn/model.py:1
+        self.num_features = num_features # channel_size
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.eps = 1e-5
+        self.momentum = 0.1
+        self.weight = Parameter(torch.ones((1, num_features, 1, 1), dtype=torch.float), requires_grad=True)
+        self.bias = Parameter(torch.zeros((1, num_features, 1, 1), dtype=torch.float), requires_grad=True)
+        self.register_buffer('running_mean', torch.zeros(size=(1, num_features, 1, 1), dtype=torch.float).to(self.device))
+        self.register_buffer('running_var', torch.ones(size=(1, num_features, 1, 1), dtype=torch.float).to(self.device))
+
+        n, c, h, w = input.size()
+        if self.training:
+            input_mean = torch.mean(input, dim=(0, 2, 3), keepdim=True).to(self.device)
+            input_var = torch.var(input, dim=(0, 2, 3), keepdim=True, unbiased=False).to(self.device)
+            input_norm = (input - input_mean) / torch.sqrt(input_var + self.eps)
+            output = self.weight * input_norm + self.bias
+
+            self.running_mean = (1-self.momentum) * self.running_mean + self.momentum * input_mean
+            self.running_var = (1-self.momentum) * self.running_var + self.momentum * input_var
+        else:
+            output = self.weight * (input - self.running_mean) / torch.sqrt(self.running_var + self.eps) + self.bias
+        return output
+
+# ../codes/cnn/model.py:2
+        if self.training:
+            mask = torch.rand(input.size(), device=input.device) > self.p
+            input = (input * mask) / (1.0 - self.p)
+
+# ../codes/cnn/model.py:3
+        self.conv1 = nn.Sequential(nn.Conv2d(in_channels=3, out_channels=128, kernel_size=3 , padding=1),
+                                BatchNorm2d(num_features=128),
+                                nn.ReLU(),
+                                Dropout(drop_rate),
+                                nn.MaxPool2d(kernel_size=2),
+                                nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, padding=1),
+                                BatchNorm2d(num_features=256),
+                                nn.ReLU(),
+                                Dropout(drop_rate),
+                                nn.MaxPool2d(kernel_size=2),
+                                )
+        self.linear = nn.Linear(in_features=256 * 8 * 8, out_features=10)
+
+# ../codes/cnn/model.py:4
+        x1 = self.conv1(x)
+        n, c, h, w = x1.size()
+        x2 = x1.reshape(n, c*h*w)
+        logits = self.linear(x2)
+
+
+########################
+# References
+########################
+
+########################
+# Other Modifications
+########################
+# _codes/mlp/model.py -> ../codes/mlp/model.py
+# 56 -         loss = self.loss(logits, y)
+# 80 +         loss = self.loss(logits, y.long())
+# 80 ?                                   +++++++
+# _codes/mlp/main.py -> ../codes/mlp/main.py
+# 5 + os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+# 6 + # fit bug:Error #15: Initializing libiomp5.dylib, but found libiomp5.dylib already initialized.
+# 16 + from tensorboardX import SummaryWriter
+# 17 +
+# 18 + writer = SummaryWriter('log')
+# 18 -     help='Batch size for mini-batch training and evaluating. Default: 100')
+# 23 +                     help='Batch size for mini-batch training and evaluating. Default: 100')
+# 23 ? ++++++++++++++++
+# 19 - parser.add_argument('--num_epochs', type=int, default=20,
+# 19 ?                                                       ^
+# 24 + parser.add_argument('--num_epochs', type=int, default=80,
+# 24 ?                                                       ^
+# 20 -     help='Number of training epoch. Default: 20')
+# 25 +                     help='Number of training epoch. Default: 20')
+# 25 ? ++++++++++++++++
+# 22 -     help='Learning rate during optimization. Default: 1e-3')
+# 27 +                     help='Learning rate during optimization. Default: 1e-3')
+# 27 ? ++++++++++++++++
+# 24 -     help='Drop rate of the Dropout Layer. Default: 0.5')
+# 29 +                     help='Drop rate of the Dropout Layer. Default: 0.5')
+# 29 ? ++++++++++++++++
+# 26 -     help='True to train and False to inference. Default: True')
+# 31 +                     help='True to train and False to inference. Default: True')
+# 31 ? ++++++++++++++++
+# 28 -     help='Data directory. Default: ../cifar-10_data')
+# 33 +                     help='Data directory. Default: ../cifar-10_data')
+# 33 ? ++++++++++++++++
+# 30 -     help='Training directory for saving model. Default: ./train')
+# 35 +                     help='Training directory for saving model. Default: ./train')
+# 35 ? ++++++++++++++++
+# 32 -     help='The version for inference. Set 0 to use latest checkpoint. Default: 0')
+# 37 +                     help='The version for inference. Set 0 to use latest checkpoint. Default: 0')
+# 37 ? ++++++++++++++++
+# 108 -         mlp_model = Model(drop_rate=drop_rate)
+# 113 +         mlp_model = Model(drop_rate=args.drop_rate)
+# 113 ?                                     +++++
+# 131 +             # Plot
+# 132 +             writer.add_scalar('Train/Loss', train_loss, epoch)
+# 133 +             writer.add_scalar('Train/Accuracy', train_acc, epoch)
+# 134 +             # Plot
+# 135 +             writer.add_scalar('Validation/Loss', val_loss, epoch)
+# 136 +             writer.add_scalar('Validation/Accuracy', val_acc, epoch)
+# 137 +
+# 130 -                 # with open(os.path.join(args.train_dir, 'checkpoint_{}.pth.tar'.format(epoch)), 'wb') as fout:
+# 130 ? ----
+# 142 +             # with open(os.path.join(args.train_dir, 'checkpoint_{}.pth.tar'.format(epoch)), 'wb') as fout:
+# 131 -                 # 	torch.save(mlp_model, fout)
+# 131 ? ----
+# 143 +             # 	torch.save(mlp_model, fout)
+# 132 -                 # with open(os.path.join(args.train_dir, 'checkpoint_0.pth.tar'), 'wb') as fout:
+# 132 ? ----
+# 144 +             # with open(os.path.join(args.train_dir, 'checkpoint_0.pth.tar'), 'wb') as fout:
+# 133 -                 # 	torch.save(mlp_model, fout)
+# 133 ? ----
+# 145 +             # 	torch.save(mlp_model, fout)
+# _codes/cnn/model.py -> ../codes/cnn/model.py
+# 7 +
+# 8 +
+# 47 -     def forward(self, x, y=None):
+# 47 ?                                  -
+# 78 +     def forward(self, x, y=None):
+# 56 -         loss = self.loss(logits, y)
+# 90 +         loss = self.loss(logits, y.long())
+# 90 ?                                   +++++++
+# _codes/cnn/main.py -> ../codes/cnn/main.py
+# 5 + os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+# 6 + # fit bug:Error #15: Initializing libiomp5.dylib, but found libiomp5.dylib already initialized.
+# 13 +
+# 14 + from tensorboardX import SummaryWriter
+# 15 + writer = SummaryWriter('log')
+# 19 - parser.add_argument('--num_epochs', type=int, default=20,
+# 19 ?                                                       ^
+# 24 + parser.add_argument('--num_epochs', type=int, default=60,
+# 24 ?                                                       ^
+# 20 -     help='Number of training epoch. Default: 20')
+# 20 ?                                              ^
+# 25 +     help='Number of training epoch. Default: 80')
+# 25 ?                                              ^
+# 110 +         fo = open("./console.txt", "w+")
+# 128 +
+# 132 +             # Plot
+# 133 +             writer.add_scalar('Train/Loss', train_loss, epoch)
+# 134 +             writer.add_scalar('Train/Accuracy', train_acc, epoch)
+# 135 +             # Plot
+# 136 +             writer.add_scalar('Validation/Loss', val_loss, epoch)
+# 137 +             writer.add_scalar('Validation/Accuracy', val_acc, epoch)
+# 159 +
+# 160 +             fo.write("\nEpoch " + str(epoch) + " of " + str(args.num_epochs) + " took " + str(epoch_time) + "s")
+# 161 +             fo.write("\n  learning rate:                 " + str(optimizer.param_groups[0]['lr']))
+# 162 +             fo.write("\n  training loss:                 " + str(train_loss))
+# 163 +             fo.write("\n  training accuracy:             " + str(train_acc))
+# 164 +             fo.write("\n  validation loss:               " + str(val_loss))
+# 165 +             fo.write("\n  validation accuracy:           " + str(val_acc))
+# 166 +             fo.write("\n  best epoch:                    " + str(best_epoch))
+# 167 +             fo.write("\n  best validation accuracy:      " + str(best_val_acc))
+# 168 +             fo.write("\n  test loss:                     " + str(test_loss))
+# 169 +             fo.write("\n  test accuracy:                 " + str(test_acc))
+
